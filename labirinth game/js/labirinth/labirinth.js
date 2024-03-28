@@ -39,7 +39,7 @@ class Labirinth {
     }
 
     render(cellSize = CELL_SIZE) {
-        strokeWeight(1);
+        strokeWeight(2);
 
         const length = this.size * cellSize;
 
@@ -66,6 +66,8 @@ class Labirinth {
                 this.cellMatrix.renderCell(row, col, cellSize);
             }
         }
+
+        strokeWeight(0);
         this.ball.render();
         goalColor();
 
@@ -181,10 +183,12 @@ class LabirinthCell {
 
 class Ball {
     constructor(labirinth) {
+        this.labirinth = labirinth;
+
         this.position = {x: CELL_SIZE / 2, y: CELL_SIZE / 2};
         this.velocity = {x: 0, y: 0};
         this.acceleration = {x: 0, y: 0};
-        this.labirinth = labirinth;
+        
         this.row = undefined;
         this.col = undefined;
         this.boundaryValidators = {};
@@ -226,28 +230,41 @@ class Ball {
         const x = this.position.x;
         const y = this.position.y;
         if (validators.up && validators.up(x, y)) {
-            this.velocity.y *= BOUNCE_BACK;
+            this.velocity.y = positive(this.velocity.y) * BOUNCE_BACK;
             return;
         } else if (validators.down && validators.down(x, y)) {
-            this.velocity.y *= BOUNCE_BACK;
+            this.velocity.y = negative(this.velocity.y) * BOUNCE_BACK;
             return;
         }
 
         if (validators.right && validators.right(x, y)) {
-            this.velocity.x *= BOUNCE_BACK;
+            this.velocity.x = negative(this.velocity.x) * BOUNCE_BACK;
             return;
         } else if (validators.left && validators.left(x, y)) {
-            this.velocity.x *= BOUNCE_BACK;
+            this.velocity.x = positive(this.velocity.x) * BOUNCE_BACK;
             return;
         }
 
         const corners = validators.corners;
-        for (let key in corners) {
-            if (corners[key](x, y)) {
-                this.velocity.x *= BOUNCE_BACK;
-                this.velocity.y *= BOUNCE_BACK;
-                return;
-            }
+
+        if (corners.downLeft && corners.downLeft(x, y)) {
+            this.velocity.x = positive(this.velocity.x) * BOUNCE_BACK;
+            this.velocity.y = negative(this.velocity.y) * BOUNCE_BACK;
+        }
+
+        if (corners.upLeft && corners.upLeft(x, y)) {
+            this.velocity.x = positive(this.velocity.x) * BOUNCE_BACK;
+            this.velocity.y = positive(this.velocity.y) * BOUNCE_BACK;
+        }
+                
+        if (corners.downRight && corners.downRight(x, y)) {
+            this.velocity.x = negative(this.velocity.x) * BOUNCE_BACK;
+            this.velocity.y = negative(this.velocity.y) * BOUNCE_BACK;
+        } 
+
+        if (corners.upRight && corners.upRight(x, y)) {
+            this.velocity.x = negative(this.velocity.x) * BOUNCE_BACK;
+            this.velocity.y = positive(this.velocity.y) * BOUNCE_BACK;
         }
     }
 
@@ -281,46 +298,46 @@ class Ball {
 
 
         if (cell.isWall('left')) {
-            validators.left = (x, y) => x < col * CELL_SIZE + BALL_RADIUS;
+            validators.left = (x, y) => x < col * CELL_SIZE + BALL_RADIUS + WALL_WIDTH/2;
         } else {
             if (!cornerValidators.downLeft && (leftNeighborCell && (leftNeighborCell.isWall('down')) || (downNeighborCell && downNeighborCell.isWall('left')))) {
-                cornerValidators.downLeft = (x, y) => distance(x, y, downLeft.x, downLeft.y) < BALL_RADIUS;
+                cornerValidators.downLeft = (x, y) => distance(x, y, downLeft.x, downLeft.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
             if (!cornerValidators.upLeft && ((leftNeighborCell && leftNeighborCell.isWall('up')) || (upNeighborCell && upNeighborCell.isWall('left')))) {
-                cornerValidators.upLeft = (x, y) => distance(x, y, upLeft.x, upLeft.y) < BALL_RADIUS;
+                cornerValidators.upLeft = (x, y) => distance(x, y, upLeft.x, upLeft.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
         }
         
         if (cell.isWall('right')) {
-            validators.right = (x, y) => x > (col + 1) * CELL_SIZE - BALL_RADIUS;
+            validators.right = (x, y) => x > (col + 1) * CELL_SIZE - BALL_RADIUS - WALL_WIDTH/2;
         } else {
             if (!cornerValidators.downRight && (rightNeighborCell && rightNeighborCell.isWall('down')) || (downNeighborCell && downNeighborCell.isWall('right'))) {
-                cornerValidators.downRight = (x, y) => distance(x, y, downRight.x, downRight.y) < BALL_RADIUS;
+                cornerValidators.downRight = (x, y) => distance(x, y, downRight.x, downRight.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
             if (!cornerValidators.upRight && ((rightNeighborCell && rightNeighborCell.isWall('up')) || (upNeighborCell && upNeighborCell.isWall('right')))) {
-                cornerValidators.upRight = (x, y) => distance(x, y, upRight.x, upRight.y) < BALL_RADIUS;
+                cornerValidators.upRight = (x, y) => distance(x, y, upRight.x, upRight.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
         }
 
         if (cell.isWall('up')) {
-            validators.up = (x, y) => y < row * CELL_SIZE + BALL_RADIUS;
+            validators.up = (x, y) => y < row * CELL_SIZE + BALL_RADIUS + WALL_WIDTH/2;
         } else {
             if (!cornerValidators.upLeft && ((leftNeighborCell && leftNeighborCell.isWall('up')) || (upNeighborCell && upNeighborCell.isWall('left')))) {
-                cornerValidators.upLeft = (x, y) => distance(x, y, upLeft.x, upLeft.y) < BALL_RADIUS;
+                cornerValidators.upLeft = (x, y) => distance(x, y, upLeft.x, upLeft.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
             if (!cornerValidators.upRight && ((rightNeighborCell && rightNeighborCell.isWall('up')) || (upNeighborCell && upNeighborCell.isWall('right')))) {
-                cornerValidators.upRight = (x, y) => distance(x, y, upRight.x, upRight.y) < BALL_RADIUS;
+                cornerValidators.upRight = (x, y) => distance(x, y, upRight.x, upRight.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
         }
 
         if (cell.isWall('down')) {
-            validators.down = (x, y) => y > (row + 1) * CELL_SIZE - BALL_RADIUS;
+            validators.down = (x, y) => y > (row + 1) * CELL_SIZE - BALL_RADIUS - WALL_WIDTH/2;
         } else {
             if (!cornerValidators.downLeft && ((leftNeighborCell && leftNeighborCell.isWall('down')) || (downNeighborCell && downNeighborCell.isWall('left')))) {
-                cornerValidators.downLeft = (x, y) => distance(x, y, downLeft.x, downLeft.y) < BALL_RADIUS;
+                cornerValidators.downLeft = (x, y) => distance(x, y, downLeft.x, downLeft.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
             if (!cornerValidators.downRight && ((rightNeighborCell && rightNeighborCell.isWall('down')) || (downNeighborCell && downNeighborCell.isWall('right')))) {
-                cornerValidators.downRight = (x, y) => distance(x, y, downRight.x, downRight.y) < BALL_RADIUS;
+                cornerValidators.downRight = (x, y) => distance(x, y, downRight.x, downRight.y) < BALL_RADIUS + WALL_WIDTH/2;
             }
         }
 
@@ -331,8 +348,6 @@ class Ball {
 
     render() {
         this.updatePosition();
-        stroke(0);
-        strokeWeight(0);
         ballColor();
         translate(this.position.x, this.position.y);
         sphere(BALL_RADIUS);
@@ -389,4 +404,12 @@ function column(centerX, centerY) {
 
 function distance(x0, y0, x1, y1) {
     return Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+}
+
+function negative(x) {
+    return -1 * Math.abs(x);
+}
+
+function positive(x) {
+    return Math.abs(x);
 }

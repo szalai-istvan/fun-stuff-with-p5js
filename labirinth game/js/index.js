@@ -1,56 +1,35 @@
 var DOC_WIDTH = document.body.clientWidth - 30;
 var DOC_HEIGHT = document.body.clientHeight - 30;
+var DOC_SIZE = Math.min(DOC_WIDTH, DOC_HEIGHT);
 
 let pressedKeys = [];
 let labirinth;
 let camera;
-let rotate = {x: 0, y: 0};
-let ballPosition;
-let size = 2;
+let rotate = { x: 0, y: 0 };
+let size = 1;
 let timeOfWin = -1_000_000;
 
 function setup() {
-  newLabirinth();
-
   createCanvas(DOC_WIDTH, DOC_HEIGHT, WEBGL);
   angleMode(DEGREES);
-
   camera = createCamera();
-  ballPosition = labirinth.ball.position;
-  camera.camera(
-    0, 
-    400, 
-    500, 
+  newLabirinth();
 
-    0, 
-    0, 
-    200
-  );
 };
 
 function draw() {
-  const x = labirinth.ball.position.x - ballPosition.x;
-  const y = labirinth.ball.position.y - ballPosition.y;
-  ballPosition = labirinth.ball.position;
-  camera.move(x, 0, y);
-  orbitControl(0, 1, 1, {freeRotation: true});
-
+  orbitControl(0, 1, 1);
   manageStageRotation();
 
   const millisSinceLastWin = millis() - timeOfWin;
-  if (millisSinceLastWin < 2_000) {
-    colorBackgroundWhenWon(millisSinceLastWin);
-  } else {
-    colorBackground();
-  }
-
+  addBackground(millisSinceLastWin);
+  addLights(millisSinceLastWin);
   if (labirinth) {
     labirinth.render();
-  }
-
-  if (labirinth.win) {
-    timeOfWin = millis();
-    newLabirinth();
+    if (labirinth.win) {
+      timeOfWin = millis();
+      newLabirinth();
+    }
   }
 }
 
@@ -135,7 +114,39 @@ function manageStageRotation() {
 }
 
 function newLabirinth() {
-  size++;
+  size = Math.min(MAX_SIZE, size + 1);
+  const camPosMul = size / (size - 1);
+  const camHeight = (size * DOC_SIZE) / 10;
+  camera.camera(
+    (camera.eyeX * camPosMul),
+    (camera.eyeY * camPosMul),
+    camHeight,
+
+    0,
+    0,
+    0
+  );
+
   labirinth = new Labirinth(size);
   labirinth.generateLayout();
+  updateAcceleration();
+}
+
+function addBackground(millisSinceLastWin) {
+  colorBackground();
+}
+
+function addLights(millisSinceLastWin) {
+  ambientLight(64);
+
+  let r = 255;
+  let g = 255;
+  let b = 255;
+
+  if (millisSinceLastWin < MILLIS_WIN_ANIMATION) {
+    r = Math.abs(r - 2*r*millisSinceLastWin/MILLIS_WIN_ANIMATION);
+    b = r;
+  }
+  pointLight(r, g, b, 0, 0, 150);
+  
 }
