@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "types": [],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "module": "ESNext",
+    "target": "ES2020",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "js/*": ["js/*"]
+    },
+
+    "strict": false
+  },
+  "include": ["**/js/common/**/*.js", "**/js/heating-planner/**/*.js", "**/js/slab-heating-planner/**/*.js", "**/*.html", "js/_old/getClosestRoomGridPointToPoint.js"],
+  "exclude": ["node_modules"]
+}
